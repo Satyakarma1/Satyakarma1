@@ -19,6 +19,17 @@ std::string read_file(const std::string& file_path) {
     return buffer.str();
 }
 
+void write_file(const std::string& file_path, const std::string& content) {
+    std::ofstream file(file_path);
+    if (!file.is_open()) {
+        throw std::runtime_error("Could not open file for writing: " + file_path);
+    }
+    file << content;
+    if (!file.good()) {
+        throw std::runtime_error("Error writing to file: " + file_path);
+    }
+}
+
 int main(int argc, char* argv[]) {
     if (argc < 3 || std::string(argv[1]) != "-p") {
         std::cerr << "Expected first argument to be '-p'" << std::endl;
@@ -64,6 +75,27 @@ int main(int argc, char* argv[]) {
                         }}
                     }},
                     {"required", json::array({"file_path"})}
+                }}
+            }}
+        },
+        {
+            {"type", "function"},
+            {"function", {
+                {"name", "Write"},
+                {"description", "Write content to a file"},
+                {"parameters", {
+                    {"type", "object"},
+                    {"properties", {
+                        {"file_path", {
+                            {"type", "string"},
+                            {"description", "The path of the file to write to"}
+                        }},
+                        {"content", {
+                            {"type", "string"},
+                            {"description", "The content to write to the file"}
+                        }}
+                    }},
+                    {"required", json::array({"file_path", "content"})}
                 }}
             }}
         }
@@ -124,6 +156,20 @@ int main(int argc, char* argv[]) {
                         tool_result = read_file(file_path);
                     } catch (const std::exception& e) {
                         tool_result = std::string("Error reading file: ") + e.what();
+                        std::cerr << tool_result << std::endl;
+                    }
+                } else if (function_name == "Write") {
+                    // Parse the arguments JSON string
+                    json arguments = json::parse(tool_call["function"]["arguments"].get<std::string>());
+                    std::string file_path = arguments["file_path"];
+                    std::string content = arguments["content"];
+
+                    // Write the content to file
+                    try {
+                        write_file(file_path, content);
+                        tool_result = "File written successfully";
+                    } catch (const std::exception& e) {
+                        tool_result = std::string("Error writing file: ") + e.what();
                         std::cerr << tool_result << std::endl;
                     }
                 }
