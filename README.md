@@ -1,34 +1,28 @@
-[![progress-banner](https://backend.codecrafters.io/progress/claude-code/420ba37f-2348-4ce3-9e15-dfff8532e9a7)](https://app.codecrafters.io/users/codecrafters-bot?r=2qF)
+# Pratham (Satyakarma1)
 
-This is a starting point for C++ solutions to the
-["Build Your own Claude Code" Challenge](https://codecrafters.io/challenges/claude-code).
+Computer Science undergraduate (incoming second year) focused on building strong fundamentals and exploring intelligent systems.
 
-Claude Code is an AI coding assistant that uses Large Language Models (LLMs) to
-understand code and perform actions through tool calls. In this challenge,
-you'll build your own Claude Code from scratch by implementing an LLM-powered
-coding assistant.
+## Interests
+- Artificial Intelligence and Machine Learning  
+- Data Structures and Algorithms  
+- Systems and Core Programming (C++, Python)  
+- Electronics and hardware-based projects  
 
-Along the way you'll learn about HTTP RESTful APIs, OpenAI-compatible tool
-calling, agent loop, and how to integrate multiple tools into an AI assistant.
+## Currently
+- Solving data structures and algorithms on LeetCode  
+- Studying machine learning and MLOps  
+- Strengthening core computer science fundamentals  
+- Building electronics projects alongside software work  
 
-**Note**: If you're viewing this repo on GitHub, head over to
-[codecrafters.io](https://codecrafters.io) to try the challenge.
+## Experience
+- Participated in the AWS DeepRacer Student Challenge  
 
-# Passing the first stage
+## Open To
+- Research opportunities  
+- Internships  
+- Patents  
+- Meaningful collaborations  
 
-The entry point for your `claude-code` implementation is in `src/main.cpp`.
-Study and uncomment the relevant code, and submit to pass the first stage:
+---
 
-```sh
-codecrafters submit
-```
-
-# Stage 2 & beyond
-
-Note: This section is for stages 2 and beyond.
-
-1. Ensure you have `cmake` installed locally.
-2. Run `./your_program.sh` to run your program, which is implemented in
-   `src/main.cpp`.
-3. Run `codecrafters submit` to submit your solution to CodeCrafters. Test
-   output will be streamed to your terminal.
+Still early, still learning, still building.
