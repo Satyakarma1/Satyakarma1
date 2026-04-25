@@ -1,11 +1,23 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
+#include <fstream>
+#include <sstream>
 
 #include <cpr/cpr.h>
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
+
+std::string read_file(const std::string& file_path) {
+    std::ifstream file(file_path);
+    if (!file.is_open()) {
+        throw std::runtime_error("Could not open file: " + file_path);
+    }
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    return buffer.str();
+}
 
 int main(int argc, char* argv[]) {
     if (argc < 3 || std::string(argv[1]) != "-p") {
@@ -81,7 +93,34 @@ int main(int argc, char* argv[]) {
     // You can use print statements as follows for debugging, they'll be visible when running tests.
     std::cerr << "Logs from your program will appear here!" << std::endl;
 
-    std::cout << result["choices"][0]["message"]["content"].get<std::string>();
+    auto& choice = result["choices"][0];
+    auto& message = choice["message"];
+
+    // Check if tool_calls are present
+    if (message.contains("tool_calls") && !message["tool_calls"].empty()) {
+        auto& tool_call = message["tool_calls"][0];
+        std::string function_name = tool_call["function"]["name"];
+
+        if (function_name == "Read") {
+            // Parse the arguments JSON string
+            json arguments = json::parse(tool_call["function"]["arguments"].get<std::string>());
+            std::string file_path = arguments["file_path"];
+
+            // Read and print the file contents
+            try {
+                std::string file_contents = read_file(file_path);
+                std::cout << file_contents;
+            } catch (const std::exception& e) {
+                std::cerr << "Error reading file: " << e.what() << std::endl;
+                return 1;
+            }
+        }
+    } else {
+        // No tool calls, print message content
+        if (!message["content"].is_null()) {
+            std::cout << message["content"].get<std::string>();
+        }
+    }
 
     return 0;
 }
