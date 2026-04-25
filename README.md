@@ -1,4 +1,4 @@
-# Pratham (Satyakarma1)
+# (Satyakarma1)
 
 Computer Science undergraduate (incoming second year) focused on building strong fundamentals and exploring intelligent systems.
 
