@@ -3,6 +3,7 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <cstdio>
 
 #include <cpr/cpr.h>
 #include <nlohmann/json.hpp>
@@ -28,6 +29,24 @@ void write_file(const std::string& file_path, const std::string& content) {
     if (!file.good()) {
         throw std::runtime_error("Error writing to file: " + file_path);
     }
+}
+
+std::string execute_bash(const std::string& command) {
+    // Redirect stderr to stdout for capturing both
+    std::string cmd = command + " 2>&1";
+    FILE* pipe = popen(cmd.c_str(), "r");
+    if (!pipe) {
+        throw std::runtime_error("Failed to execute command: " + command);
+    }
+    
+    std::string result;
+    char buffer[256];
+    while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+        result += buffer;
+    }
+    
+    int status = pclose(pipe);
+    return result;
 }
 
 int main(int argc, char* argv[]) {
@@ -96,6 +115,23 @@ int main(int argc, char* argv[]) {
                         }}
                     }},
                     {"required", json::array({"file_path", "content"})}
+                }}
+            }}
+        },
+        {
+            {"type", "function"},
+            {"function", {
+                {"name", "Bash"},
+                {"description", "Execute a shell command"},
+                {"parameters", {
+                    {"type", "object"},
+                    {"properties", {
+                        {"command", {
+                            {"type", "string"},
+                            {"description", "The command to execute"}
+                        }}
+                    }},
+                    {"required", json::array({"command"})}
                 }}
             }}
         }
@@ -170,6 +206,18 @@ int main(int argc, char* argv[]) {
                         tool_result = "File written successfully";
                     } catch (const std::exception& e) {
                         tool_result = std::string("Error writing file: ") + e.what();
+                        std::cerr << tool_result << std::endl;
+                    }
+                } else if (function_name == "Bash") {
+                    // Parse the arguments JSON string
+                    json arguments = json::parse(tool_call["function"]["arguments"].get<std::string>());
+                    std::string command = arguments["command"];
+
+                    // Execute the bash command
+                    try {
+                        tool_result = execute_bash(command);
+                    } catch (const std::exception& e) {
+                        tool_result = std::string("Error executing command: ") + e.what();
                         std::cerr << tool_result << std::endl;
                     }
                 }
