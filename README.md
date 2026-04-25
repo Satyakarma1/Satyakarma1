@@ -1,6 +1,7 @@
 # (Satyakarma1)
+Myself: Pratham Gupta
 
-Computer Science undergraduate (incoming second year) focused on building strong fundamentals and exploring intelligent systems.
+19 year old Computer Science undergraduate (incoming second year) focused on building strong fundamentals and exploring intelligent systems.
 
 ## Interests
 - Artificial Intelligence and Machine Learning  
