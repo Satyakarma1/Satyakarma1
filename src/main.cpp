@@ -43,12 +43,13 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-   json request_body = {
-    {"model", "anthropic/claude-haiku-4.5"},
-    {"messages", json::array({
+    // Initialize conversation history
+    json messages = json::array({
         {{"role", "user"}, {"content", prompt}}
-    })},
-    {"tools", json::array({
+    });
+
+    // Tool definition
+    json tools = json::array({
         {
             {"type", "function"},
             {"function", {
@@ -66,59 +67,80 @@ int main(int argc, char* argv[]) {
                 }}
             }}
         }
-    })}
-};
+    });
 
-    cpr::Response response = cpr::Post(
-        cpr::Url{base_url + "/chat/completions"},
-        cpr::Header{
-            {"Authorization", "Bearer " + api_key},
-            {"Content-Type", "application/json"}
-        },
-        cpr::Body{request_body.dump()}
-    );
+    // Agent loop
+    while (true) {
+        json request_body = {
+            {"model", "anthropic/claude-haiku-4.5"},
+            {"messages", messages},
+            {"tools", tools}
+        };
 
-    if (response.status_code != 200) {
-        std::cerr << "HTTP error: " << response.status_code << std::endl;
-        return 1;
-    }
+        cpr::Response response = cpr::Post(
+            cpr::Url{base_url + "/chat/completions"},
+            cpr::Header{
+                {"Authorization", "Bearer " + api_key},
+                {"Content-Type", "application/json"}
+            },
+            cpr::Body{request_body.dump()}
+        );
 
-    json result = json::parse(response.text);
-
-    if (!result.contains("choices") || result["choices"].empty()) {
-        std::cerr << "No choices in response" << std::endl;
-        return 1;
-    }
-
-    // You can use print statements as follows for debugging, they'll be visible when running tests.
-    std::cerr << "Logs from your program will appear here!" << std::endl;
-
-    auto& choice = result["choices"][0];
-    auto& message = choice["message"];
-
-    // Check if tool_calls are present
-    if (message.contains("tool_calls") && !message["tool_calls"].empty()) {
-        auto& tool_call = message["tool_calls"][0];
-        std::string function_name = tool_call["function"]["name"];
-
-        if (function_name == "Read") {
-            // Parse the arguments JSON string
-            json arguments = json::parse(tool_call["function"]["arguments"].get<std::string>());
-            std::string file_path = arguments["file_path"];
-
-            // Read and print the file contents
-            try {
-                std::string file_contents = read_file(file_path);
-                std::cout << file_contents;
-            } catch (const std::exception& e) {
-                std::cerr << "Error reading file: " << e.what() << std::endl;
-                return 1;
-            }
+        if (response.status_code != 200) {
+            std::cerr << "HTTP error: " << response.status_code << std::endl;
+            return 1;
         }
-    } else {
-        // No tool calls, print message content
-        if (!message["content"].is_null()) {
-            std::cout << message["content"].get<std::string>();
+
+        json result = json::parse(response.text);
+
+        if (!result.contains("choices") || result["choices"].empty()) {
+            std::cerr << "No choices in response" << std::endl;
+            return 1;
+        }
+
+        auto& choice = result["choices"][0];
+        auto& message = choice["message"];
+        std::string finish_reason = choice["finish_reason"];
+
+        // Add assistant's response to messages
+        messages.push_back(message);
+
+        // Check if there are tool calls to process
+        if (message.contains("tool_calls") && !message["tool_calls"].empty()) {
+            // Process each tool call
+            for (auto& tool_call : message["tool_calls"]) {
+                std::string tool_call_id = tool_call["id"];
+                std::string function_name = tool_call["function"]["name"];
+
+                std::string tool_result;
+
+                if (function_name == "Read") {
+                    // Parse the arguments JSON string
+                    json arguments = json::parse(tool_call["function"]["arguments"].get<std::string>());
+                    std::string file_path = arguments["file_path"];
+
+                    // Read the file contents
+                    try {
+                        tool_result = read_file(file_path);
+                    } catch (const std::exception& e) {
+                        tool_result = std::string("Error reading file: ") + e.what();
+                        std::cerr << tool_result << std::endl;
+                    }
+                }
+
+                // Add tool result to messages
+                messages.push_back({
+                    {"role", "tool"},
+                    {"tool_call_id", tool_call_id},
+                    {"content", tool_result}
+                });
+            }
+        } else {
+            // No tool calls, we're done - print the final response
+            if (!message["content"].is_null()) {
+                std::cout << message["content"].get<std::string>();
+            }
+            break;
         }
     }
 
